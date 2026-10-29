@@ -1,0 +1,90 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}Patients Directory - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Patient Management</h1>
+        <p class="page-subtitle">Registered Patients & Test History Directory</p>
+    </div>
+    <div>
+        <a href="{% url 'patient_create' %}" class="btn btn-primary">
+            &plus; Register New Patient
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-body" style="padding: 1rem 1.25rem;">
+        <form method="GET" action="{% url 'patient_list' %}" style="display: flex; gap: 0.75rem; align-items: center;">
+            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by Patient ID, Name, or Contact number..." style="max-width: 480px;">
+            <button type="submit" class="btn btn-primary">Search</button>
+            {% if query %}
+                <a href="{% url 'patient_list' %}" class="btn btn-outline">Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Patient Table Card -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Full Name</th>
+                    <th>Age / Gender</th>
+                    <th>Contact</th>
+                    <th>Address</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <td><strong>{{ patient.patient_id }}</strong></td>
+                    <td>
+                        <a href="{% url 'patient_detail' patient.pk %}" style="font-weight: 600; color: var(--primary); text-decoration: none;">
+                            {{ patient.name }}
+                        </a>
+                    </td>
+                    <td>{{ patient.age }} yrs / {{ patient.gender }}</td>
+                    <td>{{ patient.contact|default:"-" }}</td>
+                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ patient.address|default:"-" }}
+                    </td>
+                    <td>{{ patient.created_at|date:"d M Y" }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-outline btn-sm" title="View Patient Details">
+                                View
+                            </a>
+                            <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-outline btn-sm" title="Edit Patient Details">
+                                Edit
+                            </a>
+                            <a href="{% url 'test_create' %}?patient={{ patient.pk }}" class="btn btn-primary btn-sm" title="Perform New Test">
+                                + Test
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                        {% if query %}
+                            No patients found matching "<strong>{{ query }}</strong>".
+                        {% else %}
+                            No patients registered yet. Click <strong>Register New Patient</strong> to add one.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

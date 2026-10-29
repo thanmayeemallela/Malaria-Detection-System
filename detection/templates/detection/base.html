@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Malaria Detection System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <a href="{% url 'dashboard' %}" class="brand">
+            <div class="brand-icon">M</div>
+            <div>
+                <span class="brand-text">MalariaScan</span>
+                <span class="brand-tag">Diploma Project</span>
+            </div>
+        </a>
+
+        {% if user.is_authenticated %}
+        <ul class="nav-links">
+            <li><a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Dashboard</a></li>
+            <li><a href="{% url 'patient_list' %}" class="{% if 'patient' in request.resolver_match.url_name %}active{% endif %}">Patients</a></li>
+            <li><a href="{% url 'test_create' %}" class="{% if request.resolver_match.url_name == 'test_create' %}active{% endif %}">New Test</a></li>
+            <li><a href="{% url 'all_history' %}" class="{% if request.resolver_match.url_name == 'all_history' %}active{% endif %}">History</a></li>
+            <li><a href="/admin/" target="_blank">Admin</a></li>
+        </ul>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="user-badge">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background-color: var(--success); display: inline-block;"></span>
+                {{ user.username }}
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-outline btn-sm">Logout</a>
+        </div>
+        {% else %}
+        <div>
+            <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Login</a>
+        </div>
+        {% endif %}
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        <!-- System Flash Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }}">
+                    <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div>
+            <strong>Malaria Detection System</strong> &bull; Diploma Project Demonstration
+        </div>
+        <div>
+            Microscopy Decision-Support Screening Tool &bull; Local Desktop Application
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

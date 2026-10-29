@@ -1,0 +1,155 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}Dashboard - Malaria Detection System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Screening Dashboard</h1>
+        <p class="page-subtitle">Microscopy Thin Blood Smear Analysis & Screening Overview</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{% url 'patient_create' %}" class="btn btn-outline">
+            + Register Patient
+        </a>
+        <a href="{% url 'test_create' %}" class="btn btn-primary">
+            &plus; Conduct New Test
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <span class="stat-label">Total Patients</span>
+        <span class="stat-value">{{ total_patients }}</span>
+        <span class="stat-desc">Registered in system</span>
+    </div>
+
+    <div class="stat-card stat-teal">
+        <span class="stat-label">Total Tests Conducted</span>
+        <span class="stat-value">{{ total_tests }}</span>
+        <span class="stat-desc">Microscopy screenings</span>
+    </div>
+
+    <div class="stat-card stat-danger">
+        <span class="stat-label">Parasitized Cases</span>
+        <span class="stat-value" style="color: var(--danger);">{{ total_parasitized }}</span>
+        <span class="stat-desc">Detected infected cells</span>
+    </div>
+
+    <div class="stat-card stat-success">
+        <span class="stat-label">Uninfected (Healthy)</span>
+        <span class="stat-value" style="color: var(--success);">{{ total_uninfected }}</span>
+        <span class="stat-desc">No parasites detected</span>
+    </div>
+</div>
+
+<!-- Recent Tests & Quick Actions Section -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- Recent Test Results Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Recent Screening Tests</h2>
+            <a href="{% url 'all_history' %}" class="btn btn-outline btn-sm">View All History</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Test ID</th>
+                        <th>Patient</th>
+                        <th>Date</th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for test in recent_tests %}
+                    <tr>
+                        <td>
+                            <strong>{{ test.test_id }}</strong>
+                        </td>
+                        <td>
+                            <a href="{% url 'patient_detail' test.patient.pk %}" style="text-decoration: none; color: var(--primary); font-weight: 600;">
+                                {{ test.patient.name }}
+                            </a>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">{{ test.patient.patient_id }}</div>
+                        </td>
+                        <td>{{ test.test_date|date:"d M Y, H:i" }}</td>
+                        <td>
+                            {% if test.prediction %}
+                                {% if test.prediction.result == 'Parasitized' %}
+                                    <span class="badge badge-parasitized">Parasitized</span>
+                                {% else %}
+                                    <span class="badge badge-uninfected">Uninfected</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-neutral">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if test.prediction %}
+                                <strong>{{ test.prediction.confidence_score|floatformat:1 }}%</strong>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'test_result' test.test_id %}" class="btn btn-outline btn-sm">View Result</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                            No screening tests performed yet. Click <strong>Conduct New Test</strong> to start your first analysis.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Workflow Panel -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Laboratory Workflow</h3>
+            </div>
+            <div class="card-body">
+                <ol style="padding-left: 1.25rem; font-size: 0.88rem; color: var(--text-muted); line-height: 1.8;">
+                    <li><strong>Register Patient:</strong> Record patient demographics.</li>
+                    <li><strong>Upload Smear:</strong> Thin Giemsa-stained microscopy cell.</li>
+                    <li><strong>Image Pre-processing:</strong> 128x128 RGB normalization.</li>
+                    <li><strong>Model Inference:</strong> Fast screening classifier.</li>
+                    <li><strong>Download Report:</strong> Instant PDF report for records.</li>
+                </ol>
+
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{% url 'test_create' %}" class="btn btn-primary" style="width: 100%;">
+                        Start Screening Test
+                    </a>
+                    <a href="{% url 'patient_list' %}" class="btn btn-outline" style="width: 100%;">
+                        Browse All Patients
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Viva Helper Card -->
+        <div class="card" style="border-left: 4px solid var(--secondary);">
+            <div class="card-body">
+                <h4 style="font-size: 0.92rem; font-weight: 700; color: var(--secondary); margin-bottom: 0.35rem;">
+                    Diploma Project Info
+                </h4>
+                <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;">
+                    This system implements an image-based decision-support pipeline for malaria microscopy screening using Django, SQLite, and modular ML integration.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

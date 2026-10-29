@@ -1,0 +1,103 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}All Test Records - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Screening Test Records</h1>
+        <p class="page-subtitle">Complete Database of Performed Malaria Microscopy Tests</p>
+    </div>
+    <div>
+        <a href="{% url 'test_create' %}" class="btn btn-primary">&plus; Conduct New Test</a>
+    </div>
+</div>
+
+<!-- Search & Outcome Filter -->
+<div class="card" style="margin-bottom: 1.25rem;">
+    <div class="card-body" style="padding: 1rem 1.25rem;">
+        <form method="GET" action="{% url 'all_history' %}" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by Test ID, Patient ID, or Patient Name..." style="max-width: 380px;">
+            <select name="result" class="form-select" style="max-width: 200px;">
+                <option value="">-- All Outcomes --</option>
+                <option value="Parasitized" {% if result_filter == 'Parasitized' %}selected{% endif %}>Parasitized Only</option>
+                <option value="Uninfected" {% if result_filter == 'Uninfected' %}selected{% endif %}>Uninfected Only</option>
+            </select>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            {% if query or result_filter %}
+                <a href="{% url 'all_history' %}" class="btn btn-outline">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Test ID</th>
+                    <th>Date</th>
+                    <th>Patient</th>
+                    <th>Image</th>
+                    <th>Screening Outcome</th>
+                    <th>Confidence</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in tests %}
+                <tr>
+                    <td><strong>{{ test.test_id }}</strong></td>
+                    <td>{{ test.test_date|date:"d M Y, H:i" }}</td>
+                    <td>
+                        <a href="{% url 'patient_detail' test.patient.pk %}" style="font-weight: 600; color: var(--primary); text-decoration: none;">
+                            {{ test.patient.name }}
+                        </a>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);">{{ test.patient.patient_id }}</div>
+                    </td>
+                    <td>
+                        {% if test.blood_smear and test.blood_smear.image %}
+                            <img src="{{ test.blood_smear.image.url }}" alt="Smear" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test.prediction %}
+                            {% if test.prediction.result == 'Parasitized' %}
+                                <span class="badge badge-parasitized">Parasitized</span>
+                            {% else %}
+                                <span class="badge badge-uninfected">Uninfected</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test.prediction %}
+                            <strong>{{ test.prediction.confidence_score|floatformat:1 }}%</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <a href="{% url 'test_result' test.test_id %}" class="btn btn-outline btn-sm">Result</a>
+                            <a href="{% url 'report_html' test.test_id %}" class="btn btn-outline btn-sm" target="_blank">Report</a>
+                            <a href="{% url 'report_pdf' test.test_id %}" class="btn btn-primary btn-sm">&darr; PDF</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                        No tests match your filter criteria.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

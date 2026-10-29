@@ -1,0 +1,173 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}New Screening Test - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Conduct Malaria Screening Test</h1>
+        <p class="page-subtitle">Upload Thin Blood Smear Microscopy Image for AI/Heuristic Analysis</p>
+    </div>
+    <div>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline">&larr; Back to Dashboard</a>
+    </div>
+</div>
+
+{% if not patients_exist %}
+<div class="alert alert-warning" style="display: block;">
+    <strong>No Patients Found:</strong> Before conducting a screening test, please register at least one patient.
+    <div style="margin-top: 0.5rem;">
+        <a href="{% url 'patient_create' %}" class="btn btn-primary btn-sm">Register a Patient First</a>
+    </div>
+</div>
+{% endif %}
+
+<div style="max-width: 760px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Test Details &amp; Microscopy Smear</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" id="screeningTestForm">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert alert-danger" style="display: block;">
+                    <strong>Please resolve the following issues:</strong>
+                    <ul style="margin: 0.5rem 0 0 1.25rem;">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Section 1: Select Patient -->
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.patient.id_for_label }}">Select Patient *</label>
+                    {{ form.patient }}
+                    <span class="form-text">Choose the patient whose blood smear microscopy sample is being evaluated.</span>
+                </div>
+
+                <!-- Section 2: Blood Smear Image Upload with Preview -->
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label class="form-label" for="{{ form.image.id_for_label }}">
+                        Microscopy Blood Smear Image *
+                    </label>
+                    {{ form.image }}
+                    <span class="form-text">Supported formats: JPG, JPEG, PNG. Max file size: 10MB. Standard thin smear microscopy cell.</span>
+
+                    <!-- Image Preview Area -->
+                    <div id="previewContainer" style="display: none; margin-top: 1rem; padding: 1rem; background-color: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); align-items: center; gap: 1rem;">
+                        <img id="imagePreview" src="#" alt="Preview" style="width: 128px; height: 128px; object-fit: cover; border-radius: 4px; border: 2px solid var(--primary-light);">
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.9rem;" id="fileNamePreview">Microscopy Image Selected</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);" id="fileSizePreview"></div>
+                            <div style="font-size: 0.78rem; color: var(--secondary); margin-top: 0.25rem;">Image ready for 128x128 RGB pre-processing and model inference.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Clinical Symptoms (Supporting Information) -->
+                <div class="form-group" style="margin-top: 1.75rem;">
+                    <label class="form-label">
+                        Clinical Symptoms (Supporting Information)
+                    </label>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                        Check any observed clinical symptoms. <em>Note:</em> Symptoms are recorded for medical context and do not alter image-based screening.
+                    </div>
+
+                    <div class="symptoms-box">
+                        <div class="symptoms-grid">
+                            <label class="form-check">
+                                {{ form.fever }}
+                                <span class="form-check-label">Fever</span>
+                            </label>
+                            <label class="form-check">
+                                {{ form.chills }}
+                                <span class="form-check-label">Chills / Rigors</span>
+                            </label>
+                            <label class="form-check">
+                                {{ form.headache }}
+                                <span class="form-check-label">Headache</span>
+                            </label>
+                            <label class="form-check">
+                                {{ form.sweating }}
+                                <span class="form-check-label">Profuse Sweating</span>
+                            </label>
+                            <label class="form-check">
+                                {{ form.fatigue }}
+                                <span class="form-check-label">Fatigue / Malaise</span>
+                            </label>
+                        </div>
+
+                        <div style="margin-top: 0.5rem;">
+                            <label class="form-label" style="font-size: 0.82rem;" for="{{ form.other_symptoms.id_for_label }}">Other Symptoms</label>
+                            {{ form.other_symptoms }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Notes -->
+                <div class="form-group" style="margin-top: 1.25rem;">
+                    <label class="form-label" for="{{ form.notes.id_for_label }}">Laboratory / Technician Notes</label>
+                    {{ form.notes }}
+                </div>
+
+                <!-- Medical Disclaimer Alert -->
+                <div class="disclaimer-card" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+                    <span style="font-size: 1.2rem;">&#9888;</span>
+                    <div>
+                        <div class="disclaimer-title">Educational &amp; Screening Tool Disclaimer</div>
+                        <div class="disclaimer-text">
+                            This application is intended for educational and screening purposes. AI-generated results should not be considered a definitive medical diagnosis and should be confirmed by an appropriately qualified healthcare professional.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline">Cancel</a>
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        &rtrif; Run Pre-processing &amp; Screening
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Live Image Preview Handler
+    const imageInput = document.getElementById('bloodSmearInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const fileNamePreview = document.getElementById('fileNamePreview');
+    const fileSizePreview = document.getElementById('fileSizePreview');
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    imagePreview.src = evt.target.result;
+                    fileNamePreview.textContent = file.name;
+                    fileSizePreview.textContent = (file.size / 1024).toFixed(1) + " KB (" + file.type + ")";
+                    previewContainer.style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}History for {{ patient.name }} - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Patient Test History</h1>
+        <p class="page-subtitle">Patient: <strong>{{ patient.name }}</strong> (ID: {{ patient.patient_id }}) &bull; {{ patient.age }} yrs, {{ patient.gender }}</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-outline">&larr; Patient Profile</a>
+        <a href="{% url 'test_create' %}?patient={{ patient.pk }}" class="btn btn-primary">&plus; Conduct New Test</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Chronological Screening Records</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Test ID</th>
+                    <th>Test Date</th>
+                    <th>Microscopy Image</th>
+                    <th>Screening Result</th>
+                    <th>Confidence Score</th>
+                    <th>Conducted By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in tests %}
+                <tr>
+                    <td><strong>{{ test.test_id }}</strong></td>
+                    <td>{{ test.test_date|date:"d/m/Y, H:i" }}</td>
+                    <td>
+                        {% if test.blood_smear and test.blood_smear.image %}
+                            <img src="{{ test.blood_smear.image.url }}" alt="Smear" style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test.prediction %}
+                            {% if test.prediction.result == 'Parasitized' %}
+                                <span class="badge badge-parasitized">Parasitized</span>
+                            {% else %}
+                                <span class="badge badge-uninfected">Uninfected</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge badge-neutral">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test.prediction %}
+                            <strong>{{ test.prediction.confidence_score|floatformat:1 }}%</strong>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ test.conducted_by.username|default:"Lab Staff" }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem;">
+                            <a href="{% url 'test_result' test.test_id %}" class="btn btn-outline btn-sm">Result</a>
+                            <a href="{% url 'report_html' test.test_id %}" class="btn btn-outline btn-sm" target="_blank">Report</a>
+                            <a href="{% url 'report_pdf' test.test_id %}" class="btn btn-primary btn-sm" title="Download PDF">&darr; PDF</a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                        No tests recorded yet for patient {{ patient.name }}.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

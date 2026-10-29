@@ -1,0 +1,27 @@
+{
+    "model_name": "Random Forest Microscopy Classifier (NIH Dataset)",
+    "model_version": "1.0.0",
+    "dataset": "NIH / NLM Malaria Cell Images Dataset",
+    "total_trained_samples": 1600,
+    "total_evaluated_samples": 400,
+    "num_features": 63,
+    "accuracy_pct": 94.0,
+    "precision_pct": 94.44,
+    "recall_pct": 93.5,
+    "f1_pct": 93.97,
+    "confusion_matrix": [
+        [
+            189,
+            11
+        ],
+        [
+            13,
+            187
+        ]
+    ],
+    "training_time_seconds": 0.69,
+    "classes": [
+        "Uninfected",
+        "Parasitized"
+    ]
+}

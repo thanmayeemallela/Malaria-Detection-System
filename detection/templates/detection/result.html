@@ -1,0 +1,186 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}Screening Result: {{ test.test_id }} - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Screening Result &amp; Analysis</h1>
+        <p class="page-subtitle">Test ID: <strong>{{ test.test_id }}</strong> &bull; Performed on {{ test.test_date|date:"d M Y, H:i" }}</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{% url 'report_pdf' test.test_id %}" class="btn btn-primary">
+            &darr; Download PDF Report
+        </a>
+        <a href="{% url 'report_html' test.test_id %}" class="btn btn-outline" target="_blank">
+            Printable Report View
+        </a>
+        <a href="{% url 'patient_history' patient.pk %}" class="btn btn-outline">
+            Patient History
+        </a>
+        <a href="{% url 'test_create' %}" class="btn btn-secondary">
+            + Conduct Another Test
+        </a>
+    </div>
+</div>
+
+<!-- Main Outcome Banner -->
+{% if prediction %}
+    {% if prediction.result == 'Parasitized' %}
+    <div class="result-banner result-banner-parasitized">
+        <div>
+            <div class="result-heading" style="color: #991b1b;">Laboratory Screening Outcome</div>
+            <div class="result-title result-title-parasitized">PARASITIZED (MALARIA DETECTED)</div>
+            <div style="color: #7f1d1d; font-size: 0.92rem; margin-top: 0.25rem;">
+                Microscopic intracellular parasite characteristics identified in thin blood smear cell sample.
+            </div>
+        </div>
+        <div class="confidence-meter">
+            <span class="confidence-val" style="color: var(--danger);">{{ prediction.confidence_score|floatformat:1 }}%</span>
+            <span class="confidence-label">Model Confidence Score</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="result-banner result-banner-uninfected">
+        <div>
+            <div class="result-heading" style="color: #166534;">Laboratory Screening Outcome</div>
+            <div class="result-title result-title-uninfected">UNINFECTED (HEALTHY ERYTHROCYTE)</div>
+            <div style="color: #14532d; font-size: 0.92rem; margin-top: 0.25rem;">
+                Normal cell morphology observed. No intracellular trophozoite or chromatin granules detected.
+            </div>
+        </div>
+        <div class="confidence-meter">
+            <span class="confidence-val" style="color: var(--success);">{{ prediction.confidence_score|floatformat:1 }}%</span>
+            <span class="confidence-label">Model Confidence Score</span>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
+<!-- Result Details Grid -->
+<div class="result-grid">
+    <!-- Left Column: Uploaded Blood Smear Microscopy Image -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Microscopy Sample</h3>
+            </div>
+            <div class="card-body" style="text-align: center;">
+                {% if blood_smear and blood_smear.image %}
+                    <img src="{{ blood_smear.image.url }}" alt="Blood Smear" class="microscopy-frame">
+                    <div style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted); text-align: left;">
+                        <div><strong>Filename:</strong> {{ blood_smear.original_filename }}</div>
+                        <div><strong>Uploaded Size:</strong> {{ blood_smear.file_size_kb }} KB</div>
+                        <div><strong>Target Resize:</strong> 128 &times; 128 (RGB Normalized)</div>
+                    </div>
+                {% else %}
+                    <div style="padding: 3rem 1rem; color: var(--text-muted);">No image attached.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Patient Info, Inference Details, Symptoms -->
+    <div>
+        <!-- Patient Details Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Patient Demographics</h3>
+                <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-outline btn-sm">Full Profile</a>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Patient Name</div>
+                        <div style="font-weight: 700;">{{ patient.name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Patient ID</div>
+                        <div style="font-weight: 700; color: var(--primary);">{{ patient.patient_id }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Age & Gender</div>
+                        <div>{{ patient.age }} Years / {{ patient.gender }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Contact</div>
+                        <div>{{ patient.contact|default:"-" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Inference Details Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Model Inference &amp; Analytics</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.88rem;">
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Model Engine</div>
+                        <div style="font-weight: 600;">{{ prediction.ml_model.name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Model Version</div>
+                        <div>{{ prediction.ml_model.version }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Inference Time</div>
+                        <div>{{ prediction.inference_time_ms }} ms</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Raw Score</div>
+                        <div>{{ prediction.raw_score }}</div>
+                    </div>
+                </div>
+
+                {% if prediction.ml_model.description %}
+                <div style="margin-top: 1rem; padding: 0.75rem; background-color: #f8fafc; border-radius: 4px; font-size: 0.82rem; color: var(--text-muted);">
+                    <strong>Engine Details:</strong> {{ prediction.ml_model.description }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recorded Clinical Symptoms Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Clinical Symptoms (Supporting Context)</h3>
+            </div>
+            <div class="card-body">
+                {% if symptoms and symptoms.symptom_list %}
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        {% for s in symptoms.symptom_list %}
+                            <span class="badge badge-neutral" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+                                &bull; {{ s }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">
+                        No clinical symptoms recorded for this screening test.
+                    </p>
+                {% endif %}
+
+                {% if test.notes %}
+                    <div style="margin-top: 0.75rem; font-size: 0.85rem;">
+                        <strong>Technician Notes:</strong> {{ test.notes }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Medical Disclaimer Card -->
+<div class="disclaimer-card">
+    <span style="font-size: 1.4rem;">&#9888;</span>
+    <div>
+        <div class="disclaimer-title">IMPORTANT MEDICAL DISCLAIMER</div>
+        <div class="disclaimer-text">
+            This application is intended for educational and screening purposes. AI-generated results should not be considered a definitive medical diagnosis and should be confirmed by an appropriately qualified healthcare professional.
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}Patient {{ patient.name }} - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ patient.name }}</h1>
+        <p class="page-subtitle">Patient ID: <strong>{{ patient.patient_id }}</strong> &bull; Registered {{ patient.created_at|date:"d M Y" }}</p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+        <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-outline">Edit Profile</a>
+        <a href="{% url 'test_create' %}?patient={{ patient.pk }}" class="btn btn-primary">&plus; Conduct Screening Test</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem;">
+    <!-- Patient Info Card -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Demographics</h2>
+            </div>
+            <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.9rem;">
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Patient ID</div>
+                        <div style="font-weight: 700; color: var(--primary);">{{ patient.patient_id }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Age & Gender</div>
+                        <div style="font-weight: 500;">{{ patient.age }} Years / {{ patient.gender }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Contact Information</div>
+                        <div style="font-weight: 500;">{{ patient.contact|default:"Not provided" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Address</div>
+                        <div style="font-weight: 500;">{{ patient.address|default:"Not provided" }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600;">Total Tests Recorded</div>
+                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--dark);">{{ tests|length }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Tests History Card -->
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Microscopy Test History</h2>
+                <a href="{% url 'patient_history' patient.pk %}" class="btn btn-outline btn-sm">Full History View</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Test ID</th>
+                            <th>Test Date</th>
+                            <th>Screening Result</th>
+                            <th>Confidence</th>
+                            <th>Image</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test in tests %}
+                        <tr>
+                            <td><strong>{{ test.test_id }}</strong></td>
+                            <td>{{ test.test_date|date:"d M Y, H:i" }}</td>
+                            <td>
+                                {% if test.prediction %}
+                                    {% if test.prediction.result == 'Parasitized' %}
+                                        <span class="badge badge-parasitized">Parasitized</span>
+                                    {% else %}
+                                        <span class="badge badge-uninfected">Uninfected</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-neutral">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if test.prediction %}
+                                    <strong>{{ test.prediction.confidence_score|floatformat:1 }}%</strong>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if test.blood_smear and test.blood_smear.image %}
+                                    <img src="{{ test.blood_smear.image.url }}" alt="Microscopy" style="width: 38px; height: 38px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border);">
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.4rem;">
+                                    <a href="{% url 'test_result' test.test_id %}" class="btn btn-outline btn-sm">Result</a>
+                                    <a href="{% url 'report_html' test.test_id %}" class="btn btn-outline btn-sm" target="_blank">Report</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">
+                                No malaria tests conducted yet for this patient.
+                                <br/>
+                                <a href="{% url 'test_create' %}?patient={{ patient.pk }}" class="btn btn-primary btn-sm" style="margin-top: 0.75rem;">
+                                    Conduct First Test
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

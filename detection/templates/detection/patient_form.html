@@ -1,0 +1,97 @@
+{% extends 'detection/base.html' %}
+
+{% block title %}{{ title }} - Malaria Detection System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ title }}</h1>
+        <p class="page-subtitle">Patient Demographics & Medical Registration</p>
+    </div>
+    <div>
+        <a href="{% url 'patient_list' %}" class="btn btn-outline">&larr; Back to Patients</a>
+    </div>
+</div>
+
+<div style="max-width: 680px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Patient Information Details</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    Please correct the errors in the form below.
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.patient_id.id_for_label }}">Patient ID</label>
+                    {{ form.patient_id }}
+                    <span class="form-text">Leave blank or modify auto-generated format (e.g. PAT-1001).</span>
+                    {% if form.patient_id.errors %}
+                        <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.patient_id.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.name.id_for_label }}">Full Name *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.age.id_for_label }}">Age (Years) *</label>
+                        {{ form.age }}
+                        {% if form.age.errors %}
+                            <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.age.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.gender.id_for_label }}">Gender *</label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}
+                            <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.gender.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.contact.id_for_label }}">Contact Number / Email</label>
+                    {{ form.contact }}
+                    {% if form.contact.errors %}
+                        <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.contact.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.address.id_for_label }}">Address / City</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <div style="color: var(--danger); font-size: 0.8rem; margin-top: 0.2rem;">{{ form.address.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; justify-content: flex-end;">
+                    <a href="{% url 'patient_list' %}" class="btn btn-outline">Cancel</a>
+                    {% if not patient %}
+                    <button type="submit" name="save_and_test" value="1" class="btn btn-secondary">
+                        Save &amp; Start Test &rarr;
+                    </button>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary">
+                        Save Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
